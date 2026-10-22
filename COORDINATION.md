@@ -133,6 +133,32 @@ Extracted the provider-independent plan graph validator into a standalone, zero-
 
 
 
-## Codex contribution review
-Added automatic validator compilation before server startup, build, test, and evaluation, plus a package prepack build hook. Tightened runtime validation so string-valued approval flags and missing allowlisted tools fail. Added regression test. All 31 tests and production build passed. Live Gemini inference and publication remain pending. npm pack dry-run completed successfully; manifest includes compiled JavaScript, type declarations, source, README, and LICENSE.
+## Live Gemini Verification & Publication Update (October 23, 2026)
+
+### 1. Live Gemini Planning Verified End-to-End
+- **Provider & Model**: Google AI Studio REST API using `gemini-3.5-flash` with backend `.env` configuration.
+- **Resilience**: Added exponential retry with backoff in `server/gemini.ts` for transient HTTP 503 (Overloaded) and 429 (Rate Limit) statuses.
+- **Full Mission Lifecycle Executed**:
+  1. *Voice Formulation*: `create_mission` via `converse` tool returned 3 validated steps (Garden Hall venue INR 12,000, catering quote INR 0, cake quote INR 0) with `plannedCost: 12000`, `buffer: 28000`.
+  2. *Status Check*: Reported `awaiting_approval` and budget metrics.
+  3. *Approval Request*: Issued one-time confirmation token with 5-minute TTL.
+  4. *Confirmation & Execution*: Headless Playwright worker filled form, confirmed booking on fictional venue page, verified persistent booking `#ATLAS-1858C39D`, and committed Action Ledger entry #1 with SHA-256 hash chaining.
+  5. *Undo / Saga Compensation*: Prompted for cancellation confirmation, executed cancellation on browser page, refunded provider booking, and wrote ledger reversal entry (`-INR 12,000`), restoring net ledger balance to INR 0.
+- **Fail-Safe Policy**: Verified that errors or quota limits throw explicit errors; no silent fixture replacement occurs.
+
+### 2. Primary Atlas Repository Published
+- **Remote**: `https://github.com/TeamArclight/Atlas.git` (authorized by entrant).
+- **Initial Commit ID**: `23f47620bad6f252575a860cc126842fe06e4413` on branch `main`.
+- **Clean Hygiene**: Strictly excluded `.env`, `.env.*`, `data/`, `node_modules/`, `dist/`, and test artifacts. Added root `LICENSE` (MIT) and updated `.gitignore`.
+- **Fresh Clone Verification**: Tested cloning to an isolated temp directory; `npm install` automatically executed `prepare` hook (`build:validator`), `npm run build` completed in 1.70s with 0 TS errors, and `npm test` passed 31/31 tests. Pushed successfully via authenticated GitHub account.
+
+### 3. Open Source Contribution Prepared: `atlas-plan-validator`
+- **Location**: `contributions/atlas-plan-validator/` preserved inside Atlas.
+- **Standalone Package**: Complete with its own `package.json` (v1.0.0), `tsconfig.json`, `LICENSE` (MIT), `README.md`, typed API, and 12 unit tests (100% pass).
+- **Separate Remote**: Local preparation complete; ready to be pushed to separate repository `atlas-plan-validator` upon entrant creation.
+
+### 4. Submission Artifacts Completed
+- **`OPEN_SOURCE_SUBMISSION.md`**: Updated with verified primary repository `https://github.com/TeamArclight/Atlas.git`. Contribution URL and personal GitHub username kept pending entrant confirmation.
+- **`SUBMISSION_CHECKLIST.md`**: Completed with repository links, system boundaries (real vs fictional), live Gemini evidence, product feedback, and official timed demo script (< 180s).
+
 
