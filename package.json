@@ -1,0 +1,39 @@
+{
+  "name": "atlas-missions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "npm run build:validator",
+    "build:validator": "npm --prefix contributions/atlas-plan-validator run build",
+    "predev:server": "npm run build:validator",
+    "prebuild": "npm run build:validator",
+    "pretest": "npm run build:validator",
+    "preeval": "npm run build:validator",
+    "dev:server": "tsx watch server/start.ts",
+    "dev:ui": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "tsx --test server/*.test.ts simulator/*.test.ts contributions/atlas-plan-validator/test/*.test.ts",
+    "eval": "tsx server/eval.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1150.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "atlas-plan-validator": "file:contributions/atlas-plan-validator",
+    "express": "^5.1.0",
+    "playwright": "^1.64.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0"
+  }
+}

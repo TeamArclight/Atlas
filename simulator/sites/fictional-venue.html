@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Grand Orchid | Garden Hall Venue Booking</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-teal: #14b8a6;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-green: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-main);
+      padding: 1.5rem;
+      line-height: 1.5;
+    }
+    .disclaimer-banner {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .logo-area h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo-area p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-available {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-reserved {
+      background: rgba(20, 184, 166, 0.25);
+      color: var(--accent-teal);
+      border: 1px solid rgba(20, 184, 166, 0.5);
+    }
+    .status-cancelled {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .venue-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .venue-hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f233a 100%);
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .venue-hero h2 {
+      font-size: 1.3rem;
+      margin-bottom: 0.4rem;
+    }
+    .venue-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .spec-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,0,0,0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+    }
+    .booking-form {
+      padding: 1.5rem;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    input, select {
+      background: #090e17;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus {
+      border-color: #38bdf8;
+    }
+    .price-breakdown {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 0.25rem 0;
+      color: #cbd5e1;
+    }
+    .price-row.total {
+      border-top: 1px solid var(--border-color);
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #38bdf8;
+    }
+    .action-controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 0.75rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-reserve {
+      background: #0d9488;
+      color: #ffffff;
+    }
+    .btn-reserve:hover:not(:disabled) {
+      background: #14b8a6;
+    }
+    .btn-cancel {
+      background: #dc2626;
+      color: #ffffff;
+    }
+    .btn-cancel:hover:not(:disabled) {
+      background: #ef4444;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .confirmation-box {
+      margin-top: 1.5rem;
+      padding: 1.2rem;
+      border-radius: 8px;
+      border: 1px solid;
+    }
+    .confirmation-reserved {
+      background: rgba(13, 148, 136, 0.15);
+      border-color: rgba(20, 184, 166, 0.4);
+    }
+    .confirmation-cancelled {
+      background: rgba(220, 38, 38, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    .confirmation-box h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+    }
+    .confirmation-details {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: grid;
+      gap: 0.25rem;
+    }
+    .code-badge {
+      font-family: monospace;
+      background: #0b1120;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      color: #f59e0b;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="disclaimer-banner" role="note" aria-label="Demo Disclaimer">
+    <span>⚠️</span>
+    <strong>Fictional Venue Service</strong> — Simulated portal for automated Playwright agent validation. No real financial transaction occurs.
+  </div>
+
+  <header>
+    <div class="logo-area">
+      <h1>🌺 The Grand Orchid Residences & Halls</h1>
+      <p>Luxury Event Spaces & Private Gardens • Bengaluru Central</p>
+    </div>
+    <div id="booking-badge-container">
+      <span id="booking-status-badge" class="status-badge status-available" data-testid="booking-status-badge" role="status">
+        ● Available
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <article class="venue-card" aria-labelledby="venue-title">
+      <div class="venue-hero">
+        <h2 id="venue-title" data-testid="venue-name">Garden Hall (Pavilion B)</h2>
+        <p style="color: #94a3b8; font-size: 0.9rem;">Private open-air lawn & sheltered marquee, ideal for milestone birthdays & family gatherings.</p>
+        
+        <div class="venue-specs">
+          <div class="spec-item" aria-label="Capacity">
+            👥 <strong>Capacity:</strong> <span data-testid="venue-capacity">20 - 35 Guests (Target: 25)</span>
+          </div>
+          <div class="spec-item" aria-label="Base Rate">
+            🏷️ <strong>Base Rate:</strong> <span data-testid="venue-price">INR 12,000 / evening</span>
+          </div>
+          <div class="spec-item" aria-label="Catering Option">
+            🍽️ <strong>Catering:</strong> In-house or External Allowed
+          </div>
+          <div class="spec-item" aria-label="Audio Video Equipment">
+            🔊 <strong>AV System:</strong> Included (Microphone & Projector)
+          </div>
+        </div>
+      </div>
+
+      <section class="booking-form" aria-label="Venue Reservation Form">
+        <form id="reservation-form" onsubmit="event.preventDefault();">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="event-occasion">Occasion / Event Title</label>
+              <input type="text" id="event-occasion" name="occasion" value="Dad's 60th Birthday Celebration" data-testid="input-occasion" aria-label="Occasion">
+            </div>
+
+            <div class="form-group">
+              <label for="guest-count">Guest Count</label>
+              <input type="number" id="guest-count" name="guests" value="25" min="5" max="40" data-testid="input-guests" aria-label="Guest Count">
+            </div>
+
+            <div class="form-group">
+              <label for="booking-date">Event Date</label>
+              <input type="text" id="booking-date" name="date" value="Upcoming Saturday (Evening 6:00 PM - 11:00 PM)" data-testid="input-date" aria-label="Event Date">
+            </div>
+
+            <div class="form-group">
+              <label for="contact-name">Primary Contact</label>
+              <input type="text" id="contact-name" name="contact" value="Atlas Household Coordinator" data-testid="input-contact" aria-label="Contact Name">
+            </div>
+          </div>
+
+          <div class="price-breakdown" aria-label="Price Summary">
+            <div class="price-row">
+              <span>Hall Rental (5 hours):</span>
+              <span>₹10,500</span>
+            </div>
+            <div class="price-row">
+              <span>Service & Lawn Lighting:</span>
+              <span>₹1,500</span>
+            </div>
+            <div class="price-row total">
+              <span>Total Commitment:</span>
+              <span data-testid="total-cost">INR 12,000</span>
+            </div>
+          </div>
+
+          <div class="action-controls">
+            <button type="button" id="btn-reserve" class="btn-reserve" data-testid="btn-reserve" aria-label="Confirm Booking">
+              ✓ Reserve Fictional Garden Hall (₹12,000)
+            </button>
+            <button type="button" id="btn-cancel" class="btn-cancel" data-testid="btn-cancel" aria-label="Cancel Reservation" disabled>
+              ✕ Cancel Reservation & Refund
+            </button>
+          </div>
+        </form>
+
+        <div id="confirmation-area" role="region" aria-live="polite" style="display: none;">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    const badgeEl = document.getElementById('booking-status-badge');
+    const reserveBtn = document.getElementById('btn-reserve');
+    const cancelBtn = document.getElementById('btn-cancel');
+    const confirmArea = document.getElementById('confirmation-area');
+
+    function updateState(state, refId = 'ATLAS-DAD60-12000') {
+      if (state === 'reserved') {
+        badgeEl.className = 'status-badge status-reserved';
+        badgeEl.textContent = '● Booked / Confirmed';
+        reserveBtn.disabled = true;
+        cancelBtn.disabled = false;
+
+        confirmArea.style.display = 'block';
+        confirmArea.className = 'confirmation-box confirmation-reserved';
+        confirmArea.innerHTML = `
+          <h3 style="color: #2dd4bf;">🎉 Reservation Confirmed</h3>
+          <div class="confirmation-details">
+            <div>Booking Reference: <span class="code-badge" data-testid="booking-ref">${refId}</span></div>
+            <div>Venue: Garden Hall (Pavilion B) • Reserved for 25 Guests</div>
+            <div>Date: Upcoming Saturday (6:00 PM - 11:00 PM)</div>
+            <div>Amount Paid: <strong>INR 12,000</strong> (Simulated Action Ledger entry #1)</div>
+            <div style="margin-top: 0.4rem; color: #a7f3d0; font-size: 0.8rem;">Ready for inspection by Playwright MCP agent.</div>
+          </div>
+        `;
+      } else if (state === 'cancelled') {
+        badgeEl.className = 'status-badge status-cancelled';
+        badgeEl.textContent = '● Cancelled & Refunded';
+        reserveBtn.disabled = true;
+        cancelBtn.disabled = true;
+
+        confirmArea.style.display = 'block';
+        confirmArea.className = 'confirmation-box confirmation-cancelled';
+        confirmArea.innerHTML = `
+          <h3 style="color: #f87171;">↩ Reservation Cancelled & Compensated</h3>
+          <div class="confirmation-details">
+            <div>Booking Reference: <span class="code-badge">${refId}</span></div>
+            <div>Status: Cancelled upon user compensation request</div>
+            <div>Refund Credit: <strong>INR 12,000</strong> restored to household budget</div>
+            <div style="margin-top: 0.4rem; color: #fca5a5; font-size: 0.8rem;">Ledger compensated with hash-linked reversal entry.</div>
+          </div>
+        `;
+      } else {
+        badgeEl.className = 'status-badge status-available';
+        badgeEl.textContent = '● Available';
+        reserveBtn.disabled = false;
+        cancelBtn.disabled = true;
+        confirmArea.style.display = 'none';
+      }
+    }
+
+    // Manual test triggers
+    reserveBtn.addEventListener('click', () => updateState('reserved'));
+    cancelBtn.addEventListener('click', () => updateState('cancelled'));
+
+    // Handle cross-window / iframe messaging from Atlas Simulator
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'ATLAS_SYNC_MISSION') {
+        const mission = event.data.mission;
+        if (!mission) {
+          updateState('available');
+        } else if (mission.state === 'completed') {
+          updateState('reserved', 'ATLAS-' + mission.id.slice(0, 8).toUpperCase());
+        } else if (mission.state === 'undone') {
+          updateState('cancelled', 'ATLAS-' + mission.id.slice(0, 8).toUpperCase());
+        } else {
+          updateState('available');
+        }
+      }
+    });
+
+    // Check URL parameters
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('status')) {
+      updateState(params.get('status'), params.get('ref') || 'ATLAS-DAD60-12000');
+    }
+  </script>
+</body>
+</html>
