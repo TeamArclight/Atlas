@@ -3,7 +3,7 @@
 **Hackathon**: Build, Ship, Shape: Amazon Developer Hackathon (Devpost 2026)  
 **Track**: Alexa+ Track  
 **Mini-Challenge**: Open Source Contribution  
-**Status**: Prepared locally for review (repository creation and publication pending user authorization)
+**Status**: Contribution published to GitHub; Devpost entry and video submission remain manual.
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value / Status | Note |
 | :--- | :--- | :--- |
-| **Additional Contribution URL** | *[PENDING - To be populated upon public GitHub push]* | Repository path: `contributions/atlas-plan-validator/` (pending user creation of separate remote `atlas-plan-validator`) |
+| **Additional Contribution URL** | https://github.com/TeamArclight/atlas-plan-validator | Published commit: cad7c4a |
 | **Atlas Primary Repository URL** | `https://github.com/TeamArclight/Atlas.git` | Primary project repository authorized for push |
-| **GitHub Username** | *[PENDING - Entrant personal GitHub handle]* | Submitter's individual GitHub profile (e.g. `Nightingale2494` pending entrant confirmation; organization is `TeamArclight`) |
+| **GitHub Username** | Nightingale2494 | https://github.com/Nightingale2494 |
 | **Contribution License** | MIT License | Full text in `contributions/atlas-plan-validator/LICENSE` |
 | **Contribution Package Name** | `atlas-plan-validator` | Version 1.0.0, zero runtime dependencies |
 
 > [!IMPORTANT]
-> In accordance with contest rules, URLs and GitHub usernames are marked as **pending** rather than fabricated. Do not publish, push code, or submit entries without explicit authorization.
+> The user provided both repository URLs and confirmed the entrant profile. The standalone contribution is published; the Devpost entry has not been submitted.
 
 ---
 
@@ -89,56 +89,17 @@ contributions/atlas-plan-validator/
 
 ## Verification Evidence
 
-All 11 package unit tests pass deterministically using Node's native test runner (`tsx --test test/*.test.ts`):
+The standalone repository installs its own development dependencies, builds successfully, and passes all 12 tests, including a regression against malformed approval flags and missing allowlisted tools. Its original MIT license commit is preserved.
 
-```bash
-✔ 1. Valid plan satisfies constraints and computes total cost (16.5503ms)
-✔ 2. Budget validation rejects plans exceeding allocation with counterexample gap (0.7729ms)
-✔ 3. Exact budget boundary succeeds (0.1375ms)
-✔ 4. Directed Acyclic Graph (DAG) cycle detection via Kahn topological sort (0.2539ms)
-✔ 5. Self-dependency is detected and rejected (0.1722ms)
-✔ 6. Missing dependency references are rejected (0.1321ms)
-✔ 7. Tool allowlist enforcement rejects unauthorized tools (0.2285ms)
-✔ 8. Missing approval gate on costly step is rejected (0.1956ms)
-✔ 9. Approval requirement can be bypassed with explicit option if non-financial (0.1688ms)
-✔ 10. Structural step validation rejects malformed steps, empty titles, and duplicate IDs (0.2915ms)
-✔ 11. Empty plan and step limits (0.1988ms)
-ℹ tests 11 | pass 11 | fail 0
-```
+Atlas consumes the same validator source as a local package. The last full verification passed 31 tests and the production build. The seeded evaluation contains five fixture scenarios; it is separate from live Gemini verification.
 
-### Full Project Integration
+## Publication
 
-Atlas directly consumes `atlas-plan-validator` in `server/planner.ts`. Running the complete repository test suite validates both the package and Atlas integration:
+- Repository: https://github.com/TeamArclight/atlas-plan-validator
+- Contribution commit: cad7c4a
+- Primary project: https://github.com/TeamArclight/Atlas
+- Entrant: https://github.com/Nightingale2494
+- License: MIT
+- npm registry publication: not performed or required for this GitHub contribution.
 
-- **Total Tests Passing**: 30 tests (11 standalone validator tests + 19 Atlas integration/E2E/Playwright tests).
-- **Evaluation Benchmark**: 5/5 seeded scenarios passed (`npm run eval`).
-- **Production Build**: Built in 1.70s with 0 TypeScript errors (`npm run build`).
-
----
-
-## Step-by-Step Publication Instructions (For Project Owner)
-
-When authorized to publish the standalone package and submit to Devpost:
-
-1. **Create the Standalone Repository on GitHub**:
-   - Name: `atlas-plan-validator`
-   - Description: "Deterministic graph, budget, and approval constraint validator for AI agent missions"
-   - License: MIT
-2. **Push the Package Code**:
-   ```bash
-   cd contributions/atlas-plan-validator
-   git init
-   git add .
-   git commit -m "feat: initial release of atlas-plan-validator v1.0.0"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/atlas-plan-validator.git
-   git push -u origin main
-   ```
-3. **Publish to npm (Optional)**:
-   ```bash
-   npm publish --access public
-   ```
-4. **Update Submission Links**:
-   - Replace `[PENDING]` in this file and on Devpost with `https://github.com/<your-username>/atlas-plan-validator`.
-   - Update Atlas primary repository URL with `https://github.com/<your-username>/Atlas`.
-   - Insert your GitHub username.
+Use these verified links in the Devpost Open Source fields. Review the final entry and upload a demo video under three minutes. No Devpost submission has been made by this agent.

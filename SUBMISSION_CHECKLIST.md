@@ -3,7 +3,7 @@
 **Hackathon**: Build, Ship, Shape: Amazon Developer Hackathon (Devpost 2026)  
 **Primary Track**: Alexa+ Track  
 **Mini-Challenge**: Open Source Contribution  
-**Status**: Staged & Verified Locally; Primary Repository Authorized for Push to `TeamArclight/Atlas`
+**Status**: Atlas and standalone validator published; final Devpost entry and video pending.
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Submission Item | Value | Status / Verification |
 | :--- | :--- | :--- |
-| **Primary Code Repository** | `https://github.com/TeamArclight/Atlas.git` | Authorized for remote push; clean commit staged |
+| **Primary Code Repository** | `https://github.com/TeamArclight/Atlas.git` | Published primary repository |
 | **Open Source License** | MIT License | Added at root [`LICENSE`](LICENSE) and [`contributions/atlas-plan-validator/LICENSE`](contributions/atlas-plan-validator/LICENSE) |
-| **Additional Contribution Package** | `atlas-plan-validator` | Packaged under `contributions/atlas-plan-validator/`; separate repo pending entrant push |
-| **Additional Contribution URL** | *[PENDING]* | To be filled once entrant creates separate `atlas-plan-validator` remote |
-| **Entrant GitHub Username** | *[PENDING - Confirm personal handle]* | Submitter's personal GitHub username (e.g., `Nightingale2494`; org is `TeamArclight`) |
+| **Additional Contribution Package** | `atlas-plan-validator` | Packaged under `contributions/atlas-plan-validator/`; published separately at TeamArclight/atlas-plan-validator |
+| **Additional Contribution URL** | https://github.com/TeamArclight/atlas-plan-validator | Published commit cad7c4a |
+| **Entrant GitHub Username** | Nightingale2494 | User-confirmed: https://github.com/Nightingale2494 |
 | **Submission Deadline** | Friday, October 23, 2026, 12:00 PM (noon) PDT | Verified against official rules |
 
 ---

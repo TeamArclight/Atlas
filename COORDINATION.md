@@ -162,3 +162,7 @@ Extracted the provider-independent plan graph validator into a standalone, zero-
 - **`SUBMISSION_CHECKLIST.md`**: Completed with repository links, system boundaries (real vs fictional), live Gemini evidence, product feedback, and official timed demo script (< 180s).
 
 
+
+## Standalone contribution publication
+User supplied TeamArclight/atlas-plan-validator and Nightingale2494. Preserved the remote's MIT license and initial commit, published validator source/tests/docs as cad7c4a, verified independent npm install/build and 12 tests. Updated submission fields. Atlas retains its local source copy; no nested Git repository was created in contributions/. Devpost and npm registry submission have not been performed.
+

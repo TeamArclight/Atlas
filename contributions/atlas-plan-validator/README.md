@@ -17,7 +17,7 @@ Modern LLM-powered planners frequently generate multi-step task graphs. However,
 4. Attempt to execute **irreversible or costly actions** without explicit human approval gates.
 5. Reference non-existent steps or produce duplicate step identifiers.
 
-`atlas-plan-validator` guarantees that any proposed plan is a valid Directed Acyclic Graph (DAG) that strictly honors budget bounds, authorized tools, and human-in-the-loop approval requirements.
+The validator checks declared costs, graph structure, tool allowlists, and approval flags. It does not authenticate approvers, enforce external prices, or authorize execution. Applications must enforce these controls when performing actions.
 
 ---
 
@@ -26,7 +26,7 @@ Modern LLM-powered planners frequently generate multi-step task graphs. However,
 - **Topological Cycle Detection**: Employs Kahn's algorithm to mathematically guarantee DAG acyclicity, catching both direct and multi-hop cycles.
 - **Budget Upper Bounds & Counterexamples**: Computes aggregate plan costs and generates informative counterexamples highlighting the exact cost gap when over-budget.
 - **Tool Allowlist Enforcement**: Restricts plan steps strictly to permitted tool names.
-- **Human-in-the-Loop Approval Gates**: Enforces mandatory approval flags for any action incurring financial or sensitive effects.
+- **Human-in-the-Loop Approval Gates**: Enforces mandatory approval flags for any action incurring declared financial costs. Sensitive nonfinancial effects require application policy.
 - **Structural Sanity**: Verifies step ID uniqueness, non-empty titles, non-negative finite costs, and dependency referential integrity.
 - **Zero External Dependencies**: Lightweight, dependency-free core with 100% type safety.
 - **Provider Agnostic**: Independent of Express, AWS, Gemini, or any specific orchestrator.
@@ -36,7 +36,11 @@ Modern LLM-powered planners frequently generate multi-step task graphs. However,
 ## Installation
 
 ```bash
-npm install atlas-plan-validator
+git clone https://github.com/TeamArclight/atlas-plan-validator.git
+cd atlas-plan-validator
+npm install
+npm test
+npm run build
 ```
 
 Or reference locally in a monorepo workspace:
