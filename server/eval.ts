@@ -38,13 +38,13 @@ export async function runEvaluation(): Promise<EvalMetricReport> {
     const m1 = await store.createAsync("Plan Dad's 60th birthday for Saturday, 25 people, budget INR 40,000.", 40000);
     if (m1.ledger.length !== 0) unapprovedActionsCount++;
 
-    const approved1 = store.approve(m1.id);
+    const approved1 = store.approve(m1.id, { tokenOrPhrase: m1.pendingApproval?.token });
     if (approved1.ledger.length !== 1 || approved1.state !== 'completed') {
       throw new Error('Approval did not commit exactly 1 booking ledger entry');
     }
 
     compensationsAttempted++;
-    const undone1 = store.undo(m1.id);
+    const undone1 = store.undo(m1.id, { tokenOrPhrase: approved1.pendingApproval?.token ?? 'confirm cancellation' });
     if (undone1.state === 'undone' && undone1.ledger.length === 2) {
       compensationsSucceeded++;
     }
@@ -57,7 +57,7 @@ export async function runEvaluation(): Promise<EvalMetricReport> {
   // Scenario 2: Exact boundary budget (INR 12,000)
   try {
     const m2 = await store.createAsync('Mom retirement luncheon for 15 guests, budget INR 12,000', 12000);
-    const approved2 = store.approve(m2.id);
+    const approved2 = store.approve(m2.id, { tokenOrPhrase: m2.pendingApproval?.token });
     if (approved2.state !== 'completed') throw new Error('Boundary budget not approved');
     details.push({ id: 'sc-2', name: 'Boundary Minimum Budget Acceptance (INR 12,000)', status: 'pass' });
   } catch (err) {
@@ -83,7 +83,7 @@ export async function runEvaluation(): Promise<EvalMetricReport> {
     const m4 = await store.createAsync('Gaming party with friends, budget INR 15,000', 15000);
     let childBlocked = false;
     try {
-      store.approve(m4.id, { role: 'child' });
+      store.approve(m4.id, { tokenOrPhrase: m4.pendingApproval?.token, role: 'child' });
     } catch (err) {
       if (err instanceof ApprovalPolicyError && err.code === 'ROLE_UNAUTHORIZED') {
         childBlocked = true;
@@ -101,8 +101,8 @@ export async function runEvaluation(): Promise<EvalMetricReport> {
   // Scenario 5: Duplicate approval idempotency
   try {
     const m5 = await store.createAsync('Anniversary party, budget INR 40,000', 40000);
-    store.approve(m5.id);
-    const retryApprove = store.approve(m5.id); // rapid second click
+    store.approve(m5.id, { tokenOrPhrase: m5.pendingApproval?.token });
+    const retryApprove = store.approve(m5.id, { tokenOrPhrase: m5.pendingApproval?.token }); // rapid second click
     if (retryApprove.ledger.length > 1) {
       duplicateBookingsCount++;
       throw new Error('Duplicate approval created multiple ledger entries');

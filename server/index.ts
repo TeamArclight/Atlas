@@ -6,6 +6,7 @@ import { MissionStore } from './missions.js';
 import { VenueBrowserWorker } from './browser.js';
 import { ConverseService } from './converse.js';
 import { LearnedSkillStore } from './skills.js';
+import { verifyLedger } from './ledger.js';
 import { resolve } from 'node:path';
 
 function makeServer(
@@ -25,13 +26,60 @@ function makeServer(
     'create_mission',
     {
       description: 'Create a simulated milestone mission requiring explicit approval. Generates a validated multi-step plan.',
-      inputSchema: { goal: z.string().min(1).max(2000), budget: z.number().int().positive() },
+      inputSchema: {
+        goal: z.string().min(1).max(2000),
+        budget: z.number().int().positive(),
+        guests: z.number().int().positive().optional(),
+        dietaryPreferences: z.string().optional(),
+        eventDate: z.string().optional(),
+        notes: z.string().optional(),
+      },
     },
-    async ({ goal, budget }) => result(await store.createAsync(goal, budget))
+    async ({ goal, budget, guests, dietaryPreferences, eventDate, notes }) =>
+      result(await store.createAsync(goal, budget, { guests, dietaryPreferences, eventDate, notes }))
+  );
+
+  server.registerTool(
+    'revise_plan',
+    {
+      description: 'Revise mission plan with updated preferences (budget, guests, dietary preferences, notes). Generates versioned plan with before/after comparison and invalidates previous approvals.',
+      inputSchema: {
+        missionId: z.string().uuid(),
+        budget: z.number().int().positive().optional(),
+        guests: z.number().int().positive().optional(),
+        eventDate: z.string().optional(),
+        dietaryPreferences: z.string().optional(),
+        notes: z.string().optional(),
+        instruction: z.string().optional(),
+      },
+    },
+    async ({ missionId, ...changes }) => {
+      try {
+        return result(await store.revisePlan(missionId, changes));
+      } catch (e) {
+        return { content: [{ type: 'text' as const, text: e instanceof Error ? e.message : 'Plan revision failed' }], isError: true };
+      }
+    }
   );
 
   server.registerTool('list_missions', { description: 'List saved missions', inputSchema: {} }, async () =>
     result(store.list())
+  );
+
+  server.registerTool(
+    'verify_ledger',
+    {
+      description: 'Cryptographically verify the action ledger chain for a mission. Validates SHA-256 hashes, link integrity, and detects tampering or mutations.',
+      inputSchema: { missionId: z.string().uuid() },
+    },
+    async ({ missionId }) => {
+      try {
+        const mission = store.get(missionId);
+        return result(verifyLedger(mission.ledger));
+      } catch (e) {
+        return { content: [{ type: 'text' as const, text: e instanceof Error ? e.message : 'Ledger verification failed' }], isError: true };
+      }
+    }
   );
 
   server.registerTool(
@@ -64,18 +112,41 @@ function makeServer(
       description: 'Explicit human approval commits a fictional venue booking. Supports contextual tokens and role verification.',
       inputSchema: {
         missionId: z.string().uuid(),
-        tokenOrPhrase: z.string().optional(),
+        tokenOrPhrase: z.string().min(1, 'Approval token or confirmation phrase is required.'),
         role: z.enum(['adult', 'child']).optional(),
+        planVersion: z.number().int().positive().optional(),
       },
     },
-    async ({ missionId, tokenOrPhrase, role }) => {
+    async ({ missionId, tokenOrPhrase, role, planVersion }) => {
       try {
         const previous = operations.get(missionId) ?? Promise.resolve();
         const action = previous.catch(() => undefined).then(async () => {
           const mission = store.get(missionId);
-          if (tokenOrPhrase || role) store.approvals.verifyAndConsume(missionId, tokenOrPhrase, role ?? 'adult', false);
+          if (mission.state === 'completed') {
+            return store.approve(missionId, {
+              tokenOrPhrase,
+              role,
+              expectedPlanVersion: planVersion,
+              expectedAmount: mission.plannedCost,
+            });
+          }
+          // Pre-execution validation runs BEFORE any browser worker side effect!
+          store.approvals.verifyAndConsume(
+            missionId,
+            tokenOrPhrase,
+            role ?? 'adult',
+            false,
+            planVersion,
+            'book_venue',
+            mission.plannedCost
+          );
           if (worker && mission.state === 'awaiting_approval') await worker.execute(mission, 'book');
-          return store.approve(missionId, { tokenOrPhrase, role });
+          return store.approve(missionId, {
+            tokenOrPhrase,
+            role,
+            expectedPlanVersion: planVersion,
+            expectedAmount: mission.plannedCost,
+          });
         });
         operations.set(missionId, action);
         try {
@@ -95,7 +166,7 @@ function makeServer(
       description: 'Compensate and cancel a completed fictional booking.',
       inputSchema: {
         missionId: z.string().uuid(),
-        tokenOrPhrase: z.string().optional(),
+        tokenOrPhrase: z.string().min(1, 'Confirmation token or phrase is required to undo a mission.'),
         role: z.enum(['adult', 'child']).optional(),
       },
     },
@@ -104,7 +175,18 @@ function makeServer(
         const previous = operations.get(missionId) ?? Promise.resolve();
         const action = previous.catch(() => undefined).then(async () => {
           const mission = store.get(missionId);
-          if (tokenOrPhrase || role) store.approvals.verifyAndConsume(missionId, tokenOrPhrase, role ?? 'adult', false);
+          if (mission.state === 'undone') {
+            return store.undo(missionId, { tokenOrPhrase, role });
+          }
+          // Pre-execution validation runs BEFORE any browser worker side effect!
+          store.approvals.verifyAndConsume(
+            missionId,
+            tokenOrPhrase,
+            role ?? 'adult',
+            false,
+            undefined,
+            'undo'
+          );
           if (worker && mission.state === 'completed') await worker.execute(mission, 'cancel');
           return store.undo(missionId, { tokenOrPhrase, role });
         });
@@ -250,7 +332,14 @@ export function createApp(
     const previous = operations.get(missionId) ?? Promise.resolve();
     const action = previous.catch(() => undefined).then(async () => {
       const mission = store.get(missionId);
-      store.approvals.verifyAndConsume(missionId, options.tokenOrPhrase, options.role ?? 'adult', false);
+      store.approvals.verifyAndConsume(
+        missionId,
+        options.tokenOrPhrase,
+        options.role ?? 'adult',
+        false,
+        options.expectedPlanVersion,
+        operation === 'approve' ? 'book_venue' : 'undo'
+      );
       if (worker && operation === 'approve' && mission.state === 'awaiting_approval') await worker.execute(mission, 'book');
       if (worker && operation === 'undo' && mission.state === 'completed') await worker.execute(mission, 'cancel');
       return operation === 'approve' ? store.approve(missionId, options) : store.undo(missionId, options);

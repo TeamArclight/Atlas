@@ -5,13 +5,15 @@ import {
   type PlanValidationOptions,
   type PlanValidationResult,
 } from 'atlas-plan-validator';
-import type { MissionStep, AlternativeEvaluation } from '../shared/contracts.js';
+import type { MissionStep, AlternativeEvaluation, MissionPreferences } from '../shared/contracts.js';
 import { generateGeminiPlan } from './gemini.js';
 
 export const ALLOWED_TOOLS = new Set([
   'fictional_venue_book',
   'fictional_catering_quote',
   'fictional_cake_quote',
+  'fictional_catering_order',
+  'fictional_cake_order',
 ]);
 
 export interface PlanGenerationResult {
@@ -21,6 +23,7 @@ export interface PlanGenerationResult {
   mode: 'bedrock' | 'fixture' | 'gemini';
   model?: string;
   rejectionNotes?: string[];
+  preferences?: MissionPreferences;
 }
 
 export class PlannerValidationError extends PlanValidationError {
@@ -82,9 +85,13 @@ export class MissionPlanner {
    * Compares venue/catering/cake options, rejects over-budget options with counterexamples,
    * and verifies the plan graph deterministically.
    */
-  async planMission(goal: string, budget: number): Promise<PlanGenerationResult> {
+  async planMission(
+    goal: string,
+    budget: number,
+    preferences?: Partial<MissionPreferences>
+  ): Promise<PlanGenerationResult> {
     if (this.mode === 'gemini') {
-      const plan = await generateGeminiPlan(goal, budget);
+      const plan = await generateGeminiPlan(goal, budget, { preferences });
       const validation = validatePlanGraph(plan.steps, budget);
       if (!validation.valid) throw new PlannerValidationError(validation.errors.join('; '));
       return { ...plan, plannedCost: validation.totalCost, mode: 'gemini', model: this.modelId };
@@ -92,97 +99,163 @@ export class MissionPlanner {
     if (this.mode === 'bedrock') {
       return this.planWithBedrock(goal, budget);
     }
-    return this.planWithFixtures(goal, budget);
+    return this.planWithFixtures(goal, budget, preferences);
   }
 
-  public planWithFixtures(goal: string, budget: number): PlanGenerationResult {
+  public planWithFixtures(
+    goal: string,
+    budget: number,
+    prefs?: Partial<MissionPreferences>
+  ): PlanGenerationResult {
+    const guests = prefs?.guests ?? 25;
+    const dietary = prefs?.dietaryPreferences ?? 'regular';
+    const isVeg = dietary.toLowerCase().includes('veg');
+
+    const cateringRate = isVeg ? 480 : 600;
+    const cateringName = isVeg ? 'Royal Vegetarian Feast' : 'Gourmet Celebration Buffet';
+    const cateringCost = cateringRate * guests;
+    const cakeCost = 3500;
+    const venueCost = 12000;
+
     // Deterministic alternative evaluation
+    const luxuryCateringCost = 1280 * guests;
     const alternatives: AlternativeEvaluation[] = [
       {
         name: 'Royal Heritage Palace Grand Lawn',
         category: 'venue',
         cost: 35000,
         accepted: false,
-        rejectionReason:
-          'Venue cost (INR 35,000) leaves only INR 5,000 for catering and cake, which is insufficient for 25 attendees.',
+        rejectionReason: `Venue cost (INR 35,000) leaves only INR ${(budget - 35000).toLocaleString('en-IN')} for catering and cake, which is insufficient for ${guests} attendees.`,
       },
       {
         name: 'Garden Hall (The Grand Orchid)',
         category: 'venue',
-        cost: 12000,
+        cost: venueCost,
         accepted: true,
       },
       {
         name: 'Luxury 7-Course Banquet',
         category: 'catering',
-        cost: 32000,
+        cost: luxuryCateringCost,
         accepted: false,
-        rejectionReason:
-          'Combined with venue (INR 12,000), total would reach INR 44,000, exceeding INR 40,000 budget.',
+        rejectionReason: `Combined with venue (INR 12,000), total would reach INR ${(venueCost + luxuryCateringCost).toLocaleString('en-IN')}, exceeding INR ${budget.toLocaleString('en-IN')} budget.`,
       },
       {
-        name: 'Gourmet Celebration Buffet (25 pax)',
+        name: `${cateringName} (${guests} pax)`,
         category: 'catering',
-        cost: 15000,
+        cost: cateringCost,
         accepted: true,
       },
       {
         name: 'Custom Milestone 3-Tier Cake',
         category: 'cake',
-        cost: 3500,
+        cost: cakeCost,
         accepted: true,
       },
     ];
 
-    // Primary plan steps: Venue booking is the financial commitment step (INR 12,000)
-    // Catering and cake quotes are evaluated companion steps
-    const steps: MissionStep[] = [
-      {
-        id: 'venue_booking',
-        title: 'Reserve fictional Garden Hall for INR 12,000',
-        tool: 'fictional_venue_book',
-        args: {
-          venueName: 'Garden Hall',
-          guests: 25,
-          slot: 'Saturday evening',
-          price: 12000,
-        },
-        costBound: 12000,
-        dependencies: [],
-        requiresApproval: true,
-        state: 'pending',
-      },
-      {
-        id: 'catering_quote',
-        title: 'Review Gourmet Celebration Buffet quote for 25 people (INR 15,000)',
-        tool: 'fictional_catering_quote',
-        args: {
-          tier: 'gourmet',
-          guests: 25,
-          price: 15000,
-        },
-        costBound: 0,
-        dependencies: ['venue_booking'],
-        requiresApproval: false,
-        state: 'completed',
-        result: { quote: 'INR 15,000 for 25 guests', supplier: 'Gourmet Delights' },
-      },
-      {
-        id: 'cake_quote',
-        title: 'Review 3kg Milestone Birthday Cake quote (INR 3,500)',
-        tool: 'fictional_cake_quote',
-        args: {
-          flavor: 'Belgian Chocolate Truffle',
-          weightKg: 3,
-          price: 3500,
-        },
-        costBound: 0,
-        dependencies: ['venue_booking'],
-        requiresApproval: false,
-        state: 'completed',
-        result: { quote: 'INR 3,500', baker: 'Sweet Celebrations' },
-      },
-    ];
+    const services = prefs?.services ?? ['venue'];
+    const isMultiService = services.includes('catering') && services.includes('cake');
+
+    const steps: MissionStep[] = isMultiService
+      ? [
+          {
+            id: 'venue_booking',
+            title: `Reserve fictional Garden Hall for INR ${venueCost.toLocaleString('en-IN')}`,
+            tool: 'fictional_venue_book',
+            args: {
+              venueName: 'Garden Hall',
+              guests,
+              slot: prefs?.eventDate ?? 'Saturday evening',
+              price: venueCost,
+            },
+            costBound: venueCost,
+            dependencies: [],
+            requiresApproval: true,
+            state: 'pending',
+          },
+          {
+            id: 'catering_booking',
+            title: `Book ${cateringName} for ${guests} guests (INR ${cateringCost.toLocaleString('en-IN')})`,
+            tool: 'fictional_catering_order',
+            args: {
+              tier: isVeg ? 'veg_feast' : 'gourmet_buffet',
+              guests,
+              dietary: isVeg ? 'vegetarian' : 'regular',
+              price: cateringCost,
+            },
+            costBound: cateringCost,
+            dependencies: ['venue_booking'],
+            requiresApproval: true,
+            state: 'pending',
+          },
+          {
+            id: 'cake_booking',
+            title: `Book 3kg Milestone Birthday Cake (INR ${cakeCost.toLocaleString('en-IN')})`,
+            tool: 'fictional_cake_order',
+            args: {
+              flavor: 'Belgian Chocolate Truffle',
+              itemKey: 'milestone_truffle_3kg',
+              price: cakeCost,
+            },
+            costBound: cakeCost,
+            dependencies: ['catering_booking'],
+            requiresApproval: true,
+            state: 'pending',
+          },
+        ]
+      : [
+          {
+            id: 'venue_booking',
+            title: `Reserve fictional Garden Hall for INR ${venueCost.toLocaleString('en-IN')}`,
+            tool: 'fictional_venue_book',
+            args: {
+              venueName: 'Garden Hall',
+              guests,
+              slot: prefs?.eventDate ?? 'Saturday evening',
+              price: venueCost,
+            },
+            costBound: venueCost,
+            dependencies: [],
+            requiresApproval: true,
+            state: 'pending',
+          },
+          {
+            id: 'catering_quote',
+            title: `Review ${cateringName} quote for ${guests} people (INR ${cateringCost.toLocaleString('en-IN')})`,
+            tool: 'fictional_catering_quote',
+            args: {
+              tier: isVeg ? 'vegetarian' : 'gourmet',
+              guests,
+              dietary: isVeg ? 'vegetarian' : 'regular',
+              price: cateringCost,
+            },
+            costBound: 0,
+            dependencies: ['venue_booking'],
+            requiresApproval: false,
+            state: 'completed',
+            result: {
+              quote: `INR ${cateringCost.toLocaleString('en-IN')} for ${guests} guests`,
+              supplier: isVeg ? 'Royal Veg Caterers' : 'Gourmet Delights',
+              dietary: isVeg ? 'Vegetarian' : 'Standard',
+            },
+          },
+          {
+            id: 'cake_quote',
+            title: `Review 3kg Milestone Birthday Cake quote (INR ${cakeCost.toLocaleString('en-IN')})`,
+            tool: 'fictional_cake_quote',
+            args: {
+              flavor: 'Belgian Chocolate Truffle',
+              weightKg: Math.max(2, Math.ceil(guests * 0.1)),
+              price: cakeCost,
+            },
+            costBound: 0,
+            dependencies: ['venue_booking'],
+            requiresApproval: false,
+            state: 'completed',
+            result: { quote: `INR ${cakeCost.toLocaleString('en-IN')}`, baker: 'Sweet Celebrations' },
+          },
+        ];
 
     const validation = validatePlanGraph(steps, budget);
     if (!validation.valid) {
@@ -194,13 +267,21 @@ export class MissionPlanner {
 
     return {
       steps,
-      plannedCost: 12000, // Fictional venue booking commitment
+      plannedCost: validation.totalCost,
       evaluatedAlternatives: alternatives,
       mode: 'fixture',
       model: 'deterministic-scenario-planner',
       rejectionNotes: alternatives
         .filter((a) => !a.accepted)
         .map((a) => `${a.name}: ${a.rejectionReason}`),
+      preferences: {
+        guests,
+        eventDate: prefs?.eventDate ?? 'Saturday evening',
+        budget,
+        dietaryPreferences: dietary,
+        notes: prefs?.notes,
+        services,
+      },
     };
   }
 
@@ -250,24 +331,22 @@ Respond ONLY with a valid JSON object matching this schema:
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        const payload = JSON.stringify({
-          anthropic_version: 'bedrock-2023-05-31',
-          max_tokens: 1200,
-          temperature: 0.1,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
-        });
-
         const command = new InvokeModelCommand({
           modelId: this.modelId,
           contentType: 'application/json',
           accept: 'application/json',
-          body: Buffer.from(payload),
+          body: JSON.stringify({
+            anthropic_version: 'bedrock-2023-05-31',
+            max_tokens: 1500,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }],
+            temperature: 0.2,
+          }),
         });
 
         const response = await this.bedrockClient.send(command);
-        const rawJson = new TextDecoder().decode(response.body);
-        const parsed = JSON.parse(rawJson);
+        const rawBody = new TextDecoder().decode(response.body);
+        const parsed = JSON.parse(rawBody);
 
         const contentText =
           parsed.content?.[0]?.text ||

@@ -14,15 +14,17 @@ Atlas is an agentic household mission coordination system built on the **Model C
 Open the microphone console in the header. Say or type:
 1. *“Alexa, plan Dad's 60th birthday this Saturday, 25 people, budget 40,000 rupees.”*  
    Atlas creates a structured multi-step plan, evaluates venue, catering, and cake options, and rejects over-budget alternatives (such as Royal Heritage Palace).
-2. *“What's the status?”*  
-   Atlas reports the current mission state, planned commitment (INR 12,000), and remaining budget buffer (INR 28,000).
-3. *“Why not the palace?”*  
-   Atlas explains the counterexample: Royal Heritage Palace (INR 35,000) leaves only INR 5,000 for catering and cake, exceeding the budget.
-4. *“Book it”*  
-   Atlas issues a single-use contextual approval token and prompts for explicit confirmation. Saying generic *"yes"* is rejected.
-5. *“Confirm booking”*  
-   Playwright executes the booking on the fictional venue portal, the persistent provider confirms the reservation, and the Action Ledger writes an immutable SHA-256 chained entry.
-6. *“Undo the booking”* → *“Confirm cancellation”*  
+2. *“Make it cheaper”* / *“Only vegetarian food”* / *“Change it to 30 guests”*  
+   Atlas dynamically revises preferences into versioned plans (`v1 -> v2`), updates cost breakdowns, invalidates stale approvals, and summarizes exact changes.
+3. *“What have you booked?”* / *“What's the status?”*  
+   Atlas reports booked services, current mission state, planned commitment, and remaining budget buffer.
+4. *“Why did you pick Garden Hall?”*  
+   Atlas explains the counterexample: Royal Heritage Palace (INR 35,000) leaves insufficient buffer for catering and cake, exceeding budget boundaries.
+5. *“Book it”*  
+   Atlas issues a single-use contextual approval token bound to the exact plan version and prompts for explicit confirmation. Saying generic *"yes"* is rejected.
+6. *“Confirm booking”*  
+   Playwright executes the booking on the fictional venue portal, the persistent provider confirms the reservation, and the Action Ledger writes an immutable SHA-256 canonical chained entry.
+7. *“Undo the booking”* → *“Confirm cancellation”*  
    Atlas compensates the reservation in reverse dependency order, restoring the ledger balance to net INR 0.
 
 ---
@@ -78,6 +80,7 @@ In adherence to hackathon integrity guidelines, all system capabilities are trut
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │ MCP Tools Registry                                    │  │
 │  │   - create_mission, list_missions, get_mission_status │  │
+│  │   - revise_plan, verify_ledger                        │  │
 │  │   - approve_mission, undo_mission                     │  │
 │  │   - converse (Conversational Voice/Text Handler)      │  │
 │  │   - get_browser_worker_status (Playwright Evidence)   │  │
@@ -131,7 +134,7 @@ npm run dev:ui
 
 ### 4. Run Tests & Validation
 ```bash
-# Run 30 unit, integration, validator, and E2E tests
+# Run 36 unit, integration, validator, and E2E tests
 npm test
 
 # Run repeatable benchmark on seeded scenarios

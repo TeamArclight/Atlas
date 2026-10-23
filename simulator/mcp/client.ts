@@ -277,22 +277,56 @@ class McpManager {
     return this.parseToolResult<Mission>(result);
   }
 
-  public async approveMission(missionId: string): Promise<Mission> {
+  public async approveMission(
+    missionId: string,
+    options?: { tokenOrPhrase?: string; role?: 'adult' | 'child'; planVersion?: number }
+  ): Promise<Mission> {
     const client = await this.connect();
     const result = await client.callTool({
       name: 'approve_mission',
-      arguments: { missionId },
+      arguments: { missionId, ...options },
     });
     return this.parseToolResult<Mission>(result);
   }
 
-  public async undoMission(missionId: string): Promise<Mission> {
+  public async undoMission(
+    missionId: string,
+    options?: { tokenOrPhrase?: string; role?: 'adult' | 'child' }
+  ): Promise<Mission> {
     const client = await this.connect();
     const result = await client.callTool({
       name: 'undo_mission',
-      arguments: { missionId },
+      arguments: { missionId, ...options },
     });
     return this.parseToolResult<Mission>(result);
+  }
+
+  public async revisePlan(
+    missionId: string,
+    changes: {
+      budget?: number;
+      guests?: number;
+      eventDate?: string;
+      dietaryPreferences?: string;
+      notes?: string;
+      instruction?: string;
+    }
+  ): Promise<{ mission: Mission; revisionSummary: string }> {
+    const client = await this.connect();
+    const result = await client.callTool({
+      name: 'revise_plan',
+      arguments: { missionId, ...changes },
+    });
+    return this.parseToolResult<{ mission: Mission; revisionSummary: string }>(result);
+  }
+
+  public async verifyLedger(missionId: string): Promise<import('../../shared/contracts.js').LedgerVerificationResult> {
+    const client = await this.connect();
+    const result = await client.callTool({
+      name: 'verify_ledger',
+      arguments: { missionId },
+    });
+    return this.parseToolResult<import('../../shared/contracts.js').LedgerVerificationResult>(result);
   }
 
   public async getBrowserWorkerStatus(missionId: string): Promise<import('../../server/browser.js').BrowserEvidence> {

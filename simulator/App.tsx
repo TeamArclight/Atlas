@@ -137,12 +137,15 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleApproveMission = async (id: string) => {
+  const handleApproveMission = async (
+    id: string,
+    options?: { tokenOrPhrase?: string; role?: 'adult' | 'child'; planVersion?: number }
+  ) => {
     if (isApproving) return;
     setIsApproving(true);
     setActionError(null);
     try {
-      const updated = await mcpManager.approveMission(id);
+      const updated = await mcpManager.approveMission(id, options);
       setMissions((prev) => prev.map((m) => (m.id === id ? updated : m)));
     } catch (err) {
       console.error('Failed to approve mission:', err);
@@ -152,18 +155,35 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleUndoMission = async (id: string) => {
+  const handleUndoMission = async (
+    id: string,
+    options?: { tokenOrPhrase?: string; role?: 'adult' | 'child' }
+  ) => {
     if (isUndoing) return;
     setIsUndoing(true);
     setActionError(null);
     try {
-      const updated = await mcpManager.undoMission(id);
+      const updated = await mcpManager.undoMission(id, options);
       setMissions((prev) => prev.map((m) => (m.id === id ? updated : m)));
     } catch (err) {
       console.error('Failed to undo mission:', err);
       setActionError(err instanceof Error ? err.message : 'Error undoing mission.');
     } finally {
       setIsUndoing(false);
+    }
+  };
+
+  const handleReviseMission = async (
+    id: string,
+    changes: { budget?: number; guests?: number; eventDate?: string; dietaryPreferences?: string; notes?: string }
+  ) => {
+    setActionError(null);
+    try {
+      const res = await mcpManager.revisePlan(id, changes);
+      setMissions((prev) => prev.map((m) => (m.id === id ? res.mission : m)));
+    } catch (err) {
+      console.error('Failed to revise plan:', err);
+      setActionError(err instanceof Error ? err.message : 'Error revising plan.');
     }
   };
 
@@ -286,6 +306,7 @@ export const App: React.FC = () => {
                 mission={selectedMission}
                 onApprove={handleApproveMission}
                 onUndo={handleUndoMission}
+                onRevise={handleReviseMission}
                 isApproving={isApproving}
                 isUndoing={isUndoing}
                 actionError={actionError}

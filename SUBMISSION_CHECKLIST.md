@@ -73,9 +73,9 @@ Live inference was executed and verified against Google Gemini:
 All automated checks pass with zero regressions:
 
 ```bash
-# 1. Full Test Suite (31 tests across server, simulator, and atlas-plan-validator)
+# 1. Full Test Suite (41 tests across server, simulator, and atlas-plan-validator)
 npm test
-# Result: 31 passed, 0 failed, 0 errors (7.79s duration)
+# Result: 41 passed, 0 failed, 0 errors
 
 # 2. Seeded Evaluation Benchmark (5 scenarios)
 npm run eval
@@ -83,7 +83,7 @@ npm run eval
 
 # 3. Production Build
 npm run build
-# Result: Built in 1.71s with 0 TypeScript errors (tsc --noEmit && vite build)
+# Result: Built with 0 TypeScript errors (tsc --noEmit && vite build in ~1.67s)
 ```
 
 ---

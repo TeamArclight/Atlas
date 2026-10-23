@@ -27,15 +27,15 @@ test('real MCP HTTP client initializes, validates origins, and completes approva
     const created = await client.callTool({ name: 'create_mission', arguments: { goal: 'Birthday for Dad', budget: 40000 } });
     const m = (created.structuredContent as { result: Mission }).result;
     assert.equal(m.state, 'awaiting_approval');
-    const premature = await client.callTool({ name: 'undo_mission', arguments: { missionId: m.id } });
+    const premature = await client.callTool({ name: 'undo_mission', arguments: { missionId: m.id, tokenOrPhrase: 'confirm cancellation' } });
     assert.equal(premature.isError, true);
     for (let i = 0; i < 2; i++) {
-      const approved = await client.callTool({ name: 'approve_mission', arguments: { missionId: m.id } });
+      const approved = await client.callTool({ name: 'approve_mission', arguments: { missionId: m.id, tokenOrPhrase: m.pendingApproval?.token } });
       assert.equal((approved.structuredContent as { result: Mission }).result.ledger.length, 1);
     }
-    const undone = await client.callTool({ name: 'undo_mission', arguments: { missionId: m.id } });
+    const undone = await client.callTool({ name: 'undo_mission', arguments: { missionId: m.id, tokenOrPhrase: 'confirm cancellation' } });
     assert.equal((undone.structuredContent as { result: Mission }).result.state, 'undone');
-    const invalid = await client.callTool({ name: 'approve_mission', arguments: { missionId: 'bad-id' } });
+    const invalid = await client.callTool({ name: 'approve_mission', arguments: { missionId: 'bad-id', tokenOrPhrase: 'dummy' } });
     assert.equal(invalid.isError, true);
   } finally {
     await client.close();

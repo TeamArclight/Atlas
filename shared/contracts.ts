@@ -36,17 +36,31 @@ export interface LedgerEntry {
   timestamp: string;
   stepId?: string;
   idempotencyKey?: string;
+  version?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LedgerVerificationResult {
+  valid: boolean;
+  algorithm: 'sha256-canonical-v2' | 'sha256-legacy';
+  checkedEntries: number;
+  errors: string[];
+  tamperedEntryIndex?: number;
+  summary: string;
+  notice: string;
 }
 
 export interface PendingApproval {
   id: string;
   missionId: string;
+  planVersion: number;
   action: string;
   amount: number;
   approverRole: 'adult' | 'child';
   expiresAt: string;
   token: string;
   confirmationPhrase: string;
+  actionDescription?: string;
 }
 
 export interface AlternativeEvaluation {
@@ -57,13 +71,47 @@ export interface AlternativeEvaluation {
   rejectionReason?: string;
 }
 
+export interface MissionPreferences {
+  guests: number;
+  eventDate: string;
+  budget: number;
+  dietaryPreferences: string;
+  notes?: string;
+  services?: ('venue' | 'catering' | 'cake')[];
+}
+
+export interface PlanRevision {
+  version: number;
+  timestamp: string;
+  changedFields: string[];
+  summary: string;
+  previousCost: number;
+  newCost: number;
+  previousBudget: number;
+  newBudget: number;
+}
+
+export interface CostBreakdown {
+  venueCommitted: number;
+  cateringCommitted: number;
+  cakeCommitted: number;
+  estimatedQuotes: number;
+  actualSpend: number;
+  refunds: number;
+  netSpend?: number;
+}
+
 export interface Mission {
   id: string;
+  version: number;
   goal: string;
   budget: number;
   state: MissionState;
   simulated: true;
   plannedCost: number;
+  preferences?: MissionPreferences;
+  revisions?: PlanRevision[];
+  costBreakdown?: CostBreakdown;
   planner?: {
     mode: 'bedrock' | 'fixture' | 'gemini';
     model?: string;
@@ -118,6 +166,7 @@ export interface LearnedSkill {
   testResults?: {
     passed: boolean;
     executedCases: number;
+    skillVersion: number;
     failures?: string[];
     timestamp: string;
   };

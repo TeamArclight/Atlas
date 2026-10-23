@@ -13,10 +13,14 @@ test('approval, retry, persistence, and compensation preserve one booking', () =
     assert.equal(m.state, 'awaiting_approval');
     assert.equal(m.ledger.length, 0);
     assert.throws(() => store.undo(m.id));
-    store.approve(m.id); store.approve(m.id);
+    const token = m.pendingApproval!.token;
+    store.approve(m.id, { tokenOrPhrase: token });
+    store.approve(m.id, { tokenOrPhrase: token });
     const recovered = new MissionStore(directory);
     assert.equal(recovered.get(m.id).ledger.length, 1);
-    recovered.undo(m.id); recovered.undo(m.id);
+    const undoToken = recovered.get(m.id).pendingApproval?.token ?? 'confirm cancellation';
+    recovered.undo(m.id, { tokenOrPhrase: undoToken });
+    recovered.undo(m.id, { tokenOrPhrase: undoToken });
     const final = recovered.get(m.id);
     assert.equal(final.state, 'undone');
     assert.equal(final.ledger.length, 2);
