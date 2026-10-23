@@ -79,7 +79,7 @@ export async function planMenu(guests: number, budget: number) {
             <span>⚡</span> Learned Skills & Tool Forge (Demonstration)
           </h2>
           <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-            Constrained template-based skills • Isolated E2B sandbox backend requested in COORDINATION.md
+            Constrained template-based skills • Isolated E2B sandbox backend architecture
           </span>
         </div>
       </div>
@@ -101,7 +101,7 @@ export async function planMenu(guests: number, budget: number) {
           <strong>Compliance Notice:</strong> This demonstration presents constrained, template-based
           skills with policy checks and verification lifecycles. Real autonomous dynamic code generation
           requires an isolated sandbox environment (e.g. E2B) and a backend meta-tool registry.
-          Full backend contract is tracked in <code>COORDINATION.md</code>.
+          Full backend contract is documented in <code>README.md</code>.
         </div>
 
         {activeNotice && (
